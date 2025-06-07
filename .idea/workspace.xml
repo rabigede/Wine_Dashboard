@@ -4,30 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="63475995-3b35-4283-86ee-8ce7c946af2b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/Wine_Dashboard.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/FCNN.h5" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/bagging.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/catboost.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/gradientboosting.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/knn_model.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/lexicon.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/photo.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/stacking.pkl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/assets/union-wines.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pages/1_author.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pages/2_dataset.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pages/3_visualization.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pages/4_prediction.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+    <list default="true" id="63475995-3b35-4283-86ee-8ce7c946af2b" name="Changes" comment="Hello world">
+      <change afterPath="$PROJECT_DIR$/runtime.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,6 +16,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;rabigede&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/rabigede/Wine_Dashboard&quot;,
+    &quot;accountId&quot;: &quot;563a5727-80a5-4b60-b286-43d630209939&quot;
+  }
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 3
 }</component>
@@ -46,20 +37,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.lexicon.executor": "Run",
-    "Python.main.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/Users/Jarvis/PycharmProjects/Wine_Dashboard/assets"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.lexicon.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Jarvis/PycharmProjects/Wine_Dashboard/assets&quot;
   },
-  "keyToStringList": {
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "GitIgnore"
+  &quot;keyToStringList&quot;: {
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;GitIgnore&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Jarvis\PycharmProjects\Wine_Dashboard\assets" />
@@ -84,6 +75,19 @@
       <option name="presentableId" value="Default" />
       <updated>1749222308986</updated>
     </task>
+    <task id="LOCAL-00001" summary="Hello world">
+      <option name="closed" value="true" />
+      <created>1749274367077</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1749274367077</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Hello world" />
+    <option name="LAST_COMMIT_MESSAGE" value="Hello world" />
   </component>
 </project>
