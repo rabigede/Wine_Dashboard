@@ -3,35 +3,33 @@ import pandas as pd
 import numpy as np
 import pickle
 import tensorflow as tf
-from pathlib import Path
+
 from assets.lexicon import second_page, fourth_page
 
 # =========================
-# Пути к моделям (FIXED)
+# CONFIG
 # =========================
 
-BASE_DIR = Path("assets")
-
 MODEL_PATHS = {
-    "Bagging": BASE_DIR / "bagging.pkl",
-    "CatBoost": BASE_DIR / "catboost.pkl",
-    "KNN": BASE_DIR / "knn_model.pkl",
-    "FCNN": BASE_DIR / "FCNN.h5",
-    "Gradient Boosting": BASE_DIR / "gradientboosting.pkl",
-    "Stacking": BASE_DIR / "stacking.pkl"
+    "Bagging": "assets/bagging.pkl",
+    "CatBoost": "assets/catboost.pkl",
+    "KNN": "assets/knn_model.pkl",
+    "FCNN": "assets/FCNN.h5",
+    "Gradient Boosting": "assets/gradientboosting.pkl",
+    "Stacking": "assets/stacking.pkl"
 }
 
 # =========================
-# Загрузка моделей
+# LOAD MODELS
 # =========================
 
 @st.cache_resource
-def load_pickle_model(path: Path):
+def load_pickle_model(path):
     with open(path, "rb") as f:
         return pickle.load(f)
 
 @st.cache_resource
-def load_keras_model(path: Path):
+def load_keras_model(path):
     return tf.keras.models.load_model(path)
 
 models = {}
@@ -42,12 +40,11 @@ for name, path in MODEL_PATHS.items():
             models[name] = load_keras_model(path)
         else:
             models[name] = load_pickle_model(path)
-
     except Exception as e:
-        st.warning(f"Не удалось загрузить модель {name}: {e}")
+        st.warning(f"Не удалось загрузить {name}: {e}")
 
 # =========================
-# Features
+# FEATURES
 # =========================
 
 features_info = {
@@ -56,18 +53,15 @@ features_info = {
 }
 
 # =========================
-# Title
+# UI
 # =========================
 
 st.title(fourth_page["title"])
 
-st.markdown("""
-Введите параметры вина вручную  
-или загрузите CSV-файл.
-""")
+mode = st.radio("Режим ввода данных", ["CSV", "Manual"])
 
 # =========================
-# Validation
+# VALIDATION
 # =========================
 
 def validate_input_data(df, feature_names):
@@ -77,93 +71,96 @@ def validate_input_data(df, feature_names):
     if missing:
         return [f"Отсутствуют признаки: {missing}"]
 
+    df_check = df.copy()
+
     for col in feature_names:
-        try:
-            df[col] = pd.to_numeric(df[col])
-        except Exception:
-            errors.append(f"Признак '{col}' содержит некорректные значения")
 
-    if df[feature_names].isnull().values.any():
-        errors.append("Обнаружены NaN значения")
+        df_check[col] = pd.to_numeric(df_check[col], errors="coerce")
 
-    negative_cols = [c for c in feature_names if (df[c] < 0).any()]
-    if negative_cols:
-        errors.append(f"Отрицательные значения недопустимы: {negative_cols}")
+        if df_check[col].isna().any():
+            errors.append(f"'{col}' содержит некорректные значения (NaN)")
+
+        if (df_check[col] < 0).any():
+            errors.append(f"'{col}' содержит отрицательные значения")
 
     return errors
 
 # =========================
-# Upload CSV (FIXED PATH SAFE)
+# INPUT PIPELINE
 # =========================
-
-uploaded_file = st.file_uploader(
-    "Загрузите CSV-файл с признаками",
-    type=["csv"]
-)
 
 input_data = None
 
-if uploaded_file is not None:
+# ---------- CSV MODE ----------
+if mode == "CSV":
 
-    try:
-        df = pd.read_csv(uploaded_file, sep=";")
+    uploaded_file = st.file_uploader(
+        "Загрузите CSV файл",
+        type=["csv"]
+    )
 
-        validation_errors = validate_input_data(
-            df,
-            list(features_info.keys())
-        )
+    if uploaded_file:
 
-        if validation_errors:
-            for err in validation_errors:
-                st.error(err)
-        else:
+        try:
+            df = pd.read_csv(uploaded_file, sep=";")
+
+            errors = validate_input_data(df, features_info.keys())
+
+            if errors:
+                st.error("❌ Ошибки в данных:")
+                for e in errors:
+                    st.error(e)
+                st.stop()
+
             input_data = df[list(features_info.keys())]
-            st.success("Файл успешно загружен")
+            st.success("CSV успешно загружен")
 
-    except Exception as e:
-        st.error(f"Ошибка загрузки файла: {e}")
+        except Exception as e:
+            st.error(f"Ошибка чтения файла: {e}")
+            st.stop()
 
-# =========================
-# Manual input
-# =========================
+# ---------- MANUAL MODE ----------
+else:
 
-if input_data is None:
-
-    st.subheader("Ручной ввод параметров")
+    st.subheader("Ручной ввод")
 
     manual_inputs = {}
 
     for feat, descr in features_info.items():
 
         if feat == "quality":
-            value = st.slider(
-                f"{feat} ({descr})",
-                0, 10, 5
-            )
+            val = st.slider(feat, 0, 10, 5)
         else:
-            value = st.number_input(
-                f"{feat} ({descr})",
+            val = st.number_input(
+                feat,
                 min_value=0.0,
-                value=0.0,
-                step=0.1,
+                step=0.01,
                 format="%.4f"
             )
 
-        manual_inputs[feat] = value
+        manual_inputs[feat] = val
 
     input_data = pd.DataFrame([manual_inputs])
 
+    errors = validate_input_data(input_data, features_info.keys())
+
+    if errors:
+        st.error("❌ Ошибки во вводе:")
+        for e in errors:
+            st.error(e)
+        st.stop()
+
 # =========================
-# Model selection
+# MODEL SELECTION
 # =========================
 
 selected_models = st.multiselect(
-    "Выберите модели для предсказания",
+    "Выберите модели",
     list(models.keys())
 )
 
 # =========================
-# Keras prediction
+# KERAS PREDICT
 # =========================
 
 def predict_with_keras(model, df):
@@ -172,10 +169,11 @@ def predict_with_keras(model, df):
 
     if output.shape[1] > 1:
         return np.argmax(output, axis=1)
+
     return (output.flatten() > 0.5).astype(int)
 
 # =========================
-# Predict button
+# PREDICT
 # =========================
 
 if st.button("Получить предсказание"):
@@ -184,11 +182,8 @@ if st.button("Получить предсказание"):
         st.warning("Выберите хотя бы одну модель")
         st.stop()
 
-    errors = validate_input_data(input_data, list(features_info.keys()))
-
-    if errors:
-        for e in errors:
-            st.error(e)
+    if input_data is None:
+        st.error("Нет входных данных")
         st.stop()
 
     for model_name in selected_models:
@@ -200,25 +195,24 @@ if st.button("Получить предсказание"):
             continue
 
         try:
+
             if model_name == "FCNN":
                 preds = predict_with_keras(model, input_data)
             else:
                 preds = model.predict(input_data)
 
-            # normalize output
             preds = np.array(preds).flatten()
 
-            color_map = {0: "white", 1: "red"}
+            st.markdown(f"### {model_name}")
 
-            if set(np.unique(preds)).issubset({0, 1}):
-                results = [color_map[int(p)] for p in preds]
-            else:
-                results = preds.astype(str)
+            for i, p in enumerate(preds):
 
-            st.markdown(f"### Результаты модели **{model_name}**")
+                if p in [0, 1]:
+                    color = "white" if p == 0 else "red"
+                else:
+                    color = str(p)
 
-            for i, r in enumerate(results):
-                st.success(f"Объект {i+1}: {fourth_page['target']} — **{r}**")
+                st.success(f"{fourth_page['target']} #{i+1}: {color}")
 
         except Exception as e:
-            st.error(f"Ошибка в модели {model_name}: {e}")
+            st.error(f"Ошибка в {model_name}: {e}")
