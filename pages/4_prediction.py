@@ -3,32 +3,35 @@ import pandas as pd
 import numpy as np
 import pickle
 import tensorflow as tf
+from pathlib import Path
 from assets.lexicon import second_page, fourth_page
 
 # =========================
-# Пути к моделям
+# Пути к моделям (FIXED)
 # =========================
 
+BASE_DIR = Path("assets")
+
 MODEL_PATHS = {
-    "Bagging": "assets/bagging.pkl",
-    "CatBoost": "assets/catboost.pkl",
-    "KNN": "assets/knn_model.pkl",
-    "FCNN": "assets/FCNN.h5",
-    "Gradient Boosting": "assets/gradientboosting.pkl",
-    "Stacking": "assets/stacking.pkl"
+    "Bagging": BASE_DIR / "bagging.pkl",
+    "CatBoost": BASE_DIR / "catboost.pkl",
+    "KNN": BASE_DIR / "knn_model.pkl",
+    "FCNN": BASE_DIR / "FCNN.h5",
+    "Gradient Boosting": BASE_DIR / "gradientboosting.pkl",
+    "Stacking": BASE_DIR / "stacking.pkl"
 }
 
 # =========================
 # Загрузка моделей
 # =========================
 
-@st.cache_data
-def load_pickle_model(path):
+@st.cache_resource
+def load_pickle_model(path: Path):
     with open(path, "rb") as f:
         return pickle.load(f)
 
 @st.cache_resource
-def load_keras_model(path):
+def load_keras_model(path: Path):
     return tf.keras.models.load_model(path)
 
 models = {}
@@ -44,7 +47,7 @@ for name, path in MODEL_PATHS.items():
         st.warning(f"Не удалось загрузить модель {name}: {e}")
 
 # =========================
-# Информация о признаках
+# Features
 # =========================
 
 features_info = {
@@ -53,63 +56,44 @@ features_info = {
 }
 
 # =========================
-# Заголовок
+# Title
 # =========================
 
 st.title(fourth_page["title"])
 
 st.markdown("""
-Введите параметры вина вручную
+Введите параметры вина вручную  
 или загрузите CSV-файл.
 """)
 
 # =========================
-# Валидация данных
+# Validation
 # =========================
 
 def validate_input_data(df, feature_names):
     errors = []
 
-    # Проверка отсутствующих колонок
-    missing = [feat for feat in feature_names if feat not in df.columns]
-
+    missing = [f for f in feature_names if f not in df.columns]
     if missing:
-        errors.append(
-            f"Отсутствуют признаки: {missing}"
-        )
-        return errors
+        return [f"Отсутствуют признаки: {missing}"]
 
-    # Проверка и преобразование типов
     for col in feature_names:
         try:
             df[col] = pd.to_numeric(df[col])
         except Exception:
-            errors.append(
-                f"Признак '{col}' содержит некорректные значения"
-            )
+            errors.append(f"Признак '{col}' содержит некорректные значения")
 
-    # Проверка NaN
     if df[feature_names].isnull().values.any():
-        errors.append(
-            "Обнаружены пропущенные значения (NaN)"
-        )
+        errors.append("Обнаружены NaN значения")
 
-    # Проверка отрицательных значений
-    negative_columns = []
-
-    for col in feature_names:
-        if (df[col] < 0).any():
-            negative_columns.append(col)
-
-    if negative_columns:
-        errors.append(
-            f"Отрицательные значения недопустимы: {negative_columns}"
-        )
+    negative_cols = [c for c in feature_names if (df[c] < 0).any()]
+    if negative_cols:
+        errors.append(f"Отрицательные значения недопустимы: {negative_cols}")
 
     return errors
 
 # =========================
-# Загрузка CSV
+# Upload CSV (FIXED PATH SAFE)
 # =========================
 
 uploaded_file = st.file_uploader(
@@ -132,7 +116,6 @@ if uploaded_file is not None:
         if validation_errors:
             for err in validation_errors:
                 st.error(err)
-
         else:
             input_data = df[list(features_info.keys())]
             st.success("Файл успешно загружен")
@@ -141,7 +124,7 @@ if uploaded_file is not None:
         st.error(f"Ошибка загрузки файла: {e}")
 
 # =========================
-# Ручной ввод
+# Manual input
 # =========================
 
 if input_data is None:
@@ -153,16 +136,11 @@ if input_data is None:
     for feat, descr in features_info.items():
 
         if feat == "quality":
-
             value = st.slider(
                 f"{feat} ({descr})",
-                min_value=0,
-                max_value=10,
-                value=5
+                0, 10, 5
             )
-
         else:
-
             value = st.number_input(
                 f"{feat} ({descr})",
                 min_value=0.0,
@@ -176,7 +154,7 @@ if input_data is None:
     input_data = pd.DataFrame([manual_inputs])
 
 # =========================
-# Выбор моделей
+# Model selection
 # =========================
 
 selected_models = st.multiselect(
@@ -185,110 +163,62 @@ selected_models = st.multiselect(
 )
 
 # =========================
-# Предсказание Keras
+# Keras prediction
 # =========================
 
 def predict_with_keras(model, df):
-
     x = df.values.astype(np.float32)
-
     output = model.predict(x, verbose=0)
 
     if output.shape[1] > 1:
-        preds = np.argmax(output, axis=1)
-    else:
-        preds = (output.flatten() > 0.5).astype(int)
-
-    return preds
+        return np.argmax(output, axis=1)
+    return (output.flatten() > 0.5).astype(int)
 
 # =========================
-# Кнопка предсказания
+# Predict button
 # =========================
 
 if st.button("Получить предсказание"):
 
     if not selected_models:
+        st.warning("Выберите хотя бы одну модель")
+        st.stop()
 
-        st.warning(
-            "Пожалуйста, выберите хотя бы одну модель."
-        )
+    errors = validate_input_data(input_data, list(features_info.keys()))
 
-    else:
+    if errors:
+        for e in errors:
+            st.error(e)
+        st.stop()
 
-        validation_errors = validate_input_data(
-            input_data,
-            list(features_info.keys())
-        )
+    for model_name in selected_models:
 
-        if validation_errors:
+        model = models.get(model_name)
 
-            for err in validation_errors:
-                st.error(err)
+        if model is None:
+            st.error(f"Модель {model_name} не загружена")
+            continue
 
-        else:
+        try:
+            if model_name == "FCNN":
+                preds = predict_with_keras(model, input_data)
+            else:
+                preds = model.predict(input_data)
 
-            for model_name in selected_models:
+            # normalize output
+            preds = np.array(preds).flatten()
 
-                if model_name not in models:
-                    st.error(
-                        f"Модель {model_name} не загружена"
-                    )
-                    continue
+            color_map = {0: "white", 1: "red"}
 
-                model = models[model_name]
+            if set(np.unique(preds)).issubset({0, 1}):
+                results = [color_map[int(p)] for p in preds]
+            else:
+                results = preds.astype(str)
 
-                try:
+            st.markdown(f"### Результаты модели **{model_name}**")
 
-                    # Предсказание
-                    if model_name == "FCNN":
-                        preds = predict_with_keras(
-                            model,
-                            input_data
-                        )
-                    else:
-                        preds = model.predict(input_data)
+            for i, r in enumerate(results):
+                st.success(f"Объект {i+1}: {fourth_page['target']} — **{r}**")
 
-                    # Обработка результата
-                    if (
-                        isinstance(preds, np.ndarray)
-                        and preds.dtype.kind in "ifu"
-                    ):
-
-                        if set(np.unique(preds)).issubset({0, 1}):
-
-                            color_map = {
-                                0: "white",
-                                1: "red"
-                            }
-
-                            pred_colors = [
-                                color_map.get(p, "unknown")
-                                for p in preds
-                            ]
-
-                        else:
-                            pred_colors = preds.astype(str)
-
-                    else:
-                        pred_colors = preds
-
-                    # Вывод результата
-                    st.markdown(
-                        f"### Результаты модели "
-                        f"**{model_name}**"
-                    )
-
-                    for i, color in enumerate(pred_colors):
-
-                        st.success(
-                            f"Объект {i + 1}: "
-                            f"{fourth_page['target']} — "
-                            f"**{color}**"
-                        )
-
-                except Exception as e:
-
-                    st.error(
-                        f"Ошибка в модели "
-                        f"{model_name}: {e}"
-                    )
+        except Exception as e:
+            st.error(f"Ошибка в модели {model_name}: {e}")
