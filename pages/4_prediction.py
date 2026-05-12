@@ -6,9 +6,6 @@ import tensorflow as tf
 
 from assets.lexicon import second_page, fourth_page
 
-# =========================
-# МОДЕЛИ
-# =========================
 
 MODEL_PATHS = {
     "Bagging": "assets/bagging.pkl",
@@ -39,45 +36,30 @@ for name, path in MODEL_PATHS.items():
     except Exception as e:
         st.warning(f"Не удалось загрузить модель {name}: {e}")
 
-# =========================
-# ПРИЗНАКИ
-# =========================
 
 features_info = {
     k: v for k, v in second_page["features"].items()
     if k != "color"
 }
 
-# =========================
-# РЕАЛЬНЫЕ ДИАПАЗОНЫ (ВАЖНО)
-# =========================
-
 FEATURE_RANGES = {
-    "fixed acidity": (4, 16),
-    "volatile acidity": (0, 1.5),
-    "citric acid": (0, 1),
-    "residual sugar": (0, 65),
-    "chlorides": (0, 0.6),
-    "free sulfur dioxide": (0, 150),
-    "total sulfur dioxide": (0, 300),
-    "density": (0.98, 1.01),
-    "pH": (2.8, 3.8),
-    "sulphates": (0, 2),
-    "alcohol": (8, 15),
+    "fixed acidity": (2, 17),
+    "volatile acidity": (0, 1.8),
+    "citric acid": (0, 2),
+    "residual sugar": (0, 67),
+    "chlorides": (0, 0.8),
+    "free sulfur dioxide": (0, 300),
+    "total sulfur dioxide": (0, 500),
+    "density": (0.9, 1.3),
+    "pH": (2.5, 4.5),
+    "sulphates": (0, 2.5),
+    "alcohol": (4, 20),
     "quality": (0, 10)
 }
-
-# =========================
-# UI
-# =========================
 
 st.title(fourth_page["title"])
 
 st.markdown("Введите параметры вина или загрузите CSV-файл")
-
-# =========================
-# ВАЛИДАЦИЯ
-# =========================
 
 def validate_input_data(df, feature_names):
     errors = []
@@ -85,7 +67,7 @@ def validate_input_data(df, feature_names):
     # missing columns
     missing = [f for f in feature_names if f not in df.columns]
     if missing:
-        errors.append(f"❌ Отсутствуют признаки: {missing}")
+        errors.append(f"Отсутствуют признаки: {missing}")
         return errors
 
     # numeric conversion
@@ -94,12 +76,12 @@ def validate_input_data(df, feature_names):
 
     # NaN check
     if df[feature_names].isnull().values.any():
-        errors.append("❌ Обнаружены NaN или некорректные значения")
+        errors.append("Обнаружены NaN или некорректные значения")
 
     # negative values
     negative_cols = [col for col in feature_names if (df[col] < 0).any()]
     if negative_cols:
-        errors.append(f"❌ Отрицательные значения: {negative_cols}")
+        errors.append(f"Отрицательные значения: {negative_cols}")
 
     # range check
     out_of_range = []
@@ -110,13 +92,9 @@ def validate_input_data(df, feature_names):
                 out_of_range.append(col)
 
     if out_of_range:
-        errors.append(f"❌ Значения вне диапазона: {out_of_range}")
+        errors.append(f"Значения вне диапазона: {out_of_range}")
 
     return errors
-
-# =========================
-# CSV
-# =========================
 
 uploaded_file = st.file_uploader("CSV файл", type=["csv"])
 
@@ -138,9 +116,6 @@ if uploaded_file is not None:
     except Exception as e:
         st.error(f"Ошибка загрузки файла: {e}")
 
-# =========================
-# РУЧНОЙ ВВОД
-# =========================
 
 if input_data is None:
 
@@ -173,18 +148,12 @@ if input_data is None:
 
     input_data = pd.DataFrame([manual_inputs])
 
-# =========================
-# МОДЕЛИ
-# =========================
 
 selected_models = st.multiselect(
     "Выберите модели",
     list(models.keys())
 )
 
-# =========================
-# FCNN
-# =========================
 
 def predict_with_keras(model, df):
     x = df.values.astype(np.float32)
@@ -193,10 +162,6 @@ def predict_with_keras(model, df):
     if output.shape[1] > 1:
         return np.argmax(output, axis=1)
     return (output.flatten() > 0.5).astype(int)
-
-# =========================
-# КНОПКА
-# =========================
 
 if st.button("Получить предсказание"):
 
