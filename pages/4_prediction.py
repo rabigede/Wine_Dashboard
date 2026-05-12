@@ -120,7 +120,7 @@ if uploaded_file is not None:
 if input_data is None:
 
     st.subheader("Ручной ввод")
-
+    st.markdown("!!! Мы ввели ограничения на значения признаков, ориентируясь на данные, указанные в оригинальном датасете")
     manual_inputs = {}
 
     for feat, descr in features_info.items():
