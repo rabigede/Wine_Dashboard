@@ -8,7 +8,7 @@ st.title("Информация о наборе данных")
 
 st.markdown(second_page["domain_description"])
 
-DATA_PATH = "assets\\union-wines.csv"
+DATA_PATH = "assets/union-wines.csv"
 df = pd.read_csv(DATA_PATH, sep=';')
 
 features_dict = second_page["features"]
